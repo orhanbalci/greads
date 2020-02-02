@@ -7,3 +7,12 @@ pub struct GAuthor {
     pub born_at: Option<String>,
     pub died_at: Option<String>,
 }
+
+#[derive(Debug)]
+pub struct GBook {
+    pub id: u32,
+    pub title: String,
+    pub num_pages: Option<u32>,
+    pub average_rating: Option<f32>,
+    pub description: Option<String>,
+}
