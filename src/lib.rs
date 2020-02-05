@@ -4,10 +4,10 @@ pub mod error;
 pub mod parser;
 
 use books_endpoint::BooksEndpoint;
-use entity::{GAuthor, GBook};
+use entity::{GAuthor};
 use error::GError;
 
-static BASE_API_URL: &'static str = "http://www.goodreads.com/";
+static BASE_API_URL: &'static str = "https://www.goodreads.com/";
 static CLIENT_KEY: &'static str = "bTDP9FC0ax7CKuOQxHnIoQ";
 
 pub struct GreadsClient {

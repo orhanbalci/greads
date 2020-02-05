@@ -2,6 +2,7 @@
 pub enum GError {
     RequestError(reqwest::Error),
     ParsingError(roxmltree::Error),
+    NotFound,
 }
 
 impl From<reqwest::Error> for GError {

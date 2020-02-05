@@ -60,36 +60,44 @@ fn main() {
 
         let mut runtime = sd.rt.lock().unwrap();
 
-        let books = runtime
-            .block_on(GreadsClient::new().books().get_by_isbn("9755109285", 1))
+        let book = runtime.block_on(GreadsClient::new().books().get_by_isbn("9755109285"));
+        if let Ok(b) = book {
+            sp.stop();
+            write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
+            b.to_table(io);
+        } else {
+            writeln!(io, "Can not find book").expect("Can not write result to output");
+        }
+        Ok(())
+    });
+
+    shell.new_command_noargs("bookbyid", "list book by id", |io, sd| {
+        let sp = Spinner::new(Spinners::Dots9, "Fetching books".into());
+
+        let mut runtime = sd.rt.lock().unwrap();
+
+        let book = runtime
+            .block_on(GreadsClient::new().books().get_by_book_id(11307453))
             .unwrap();
 
         sp.stop();
         write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
+        book.to_table(io);
+        Ok(())
+    });
 
-        let mut table = Table::new();
-        table.add_row(row![
-            "Book Id",
-            "Title",
-            "Number Of Pages",
-            "Average Rating",
-            "Description"
-        ]);
-        books.into_iter().for_each(|book| {
-            table.add_row(row![
-                book.id,
-                book.title,
-                book.num_pages.unwrap_or(0),
-                book.average_rating.unwrap_or(0.0f32),
-                book.description
-                    .unwrap_or("".to_owned())
-                    .chars()
-                    .take(30)
-                    .collect::<String>()
-            ]);
-        });
-        table.print(io).expect("Can not print authors book result");
+    shell.new_command_noargs("bookbytitle", "list book by title", |io, sd| {
+        let sp = Spinner::new(Spinners::Dots9, "Fetching books".into());
 
+        let mut runtime = sd.rt.lock().unwrap();
+
+        let book = runtime
+            .block_on(GreadsClient::new().books().get_by_title("korluk", ""))
+            .unwrap();
+
+        sp.stop();
+        write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
+        book.to_table(io);
         Ok(())
     });
     // shell.new_command_noargs("showauthor", "show author info", author_show_command);
@@ -153,6 +161,31 @@ impl TableDisplay for Vec<greadslib::entity::GBook> {
     }
 }
 
+impl TableDisplay for greadslib::entity::GBook {
+    fn to_table(&self, io: &mut ShellIO) {
+        let mut table = Table::new();
+        table.add_row(row![
+            "Book Id",
+            "Title",
+            "Number Of Pages",
+            "Average Rating",
+            "Description"
+        ]);
+        table.add_row(row![
+            self.id,
+            self.title,
+            self.num_pages.unwrap_or(0),
+            self.average_rating.unwrap_or(0.0f32),
+            self.description
+                .as_ref()
+                .unwrap_or(&"".to_owned())
+                .chars()
+                .take(30)
+                .collect::<String>()
+        ]);
+        table.print(io).expect("Can not print book info");
+    }
+}
 // pub fn author_show_command(io : &mut ShellIO, _ : &mut ()) -> Result<(), shrust::ExecError> {
 //     let author  = futures::executor::block_on(GreadsClient::new().author_show(1285555)).unwrap();
 //     writeln!(io, "{}", author.id)?;

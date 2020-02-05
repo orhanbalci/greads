@@ -18,6 +18,7 @@ pub fn parse_author(author_content: &str) -> Result<GAuthor, roxmltree::Error> {
 }
 
 pub fn parse_books(book_content: &str) -> Result<Vec<GBook>, roxmltree::Error> {
+    println!("{}", book_content);
     let doc = roxmltree::Document::parse(book_content)?;
     let book_nodes = doc
         .descendants()
@@ -67,4 +68,14 @@ fn get_node_text(doc: &roxmltree::Document, tag_name: &str) -> Option<String> {
     } else {
         None
     }
+}
+
+pub fn parse_get_by_isbn(get_by_isbn_content: &str) -> Result<GBook, roxmltree::Error> {
+    println!("{}", get_by_isbn_content);
+    let doc = roxmltree::Document::parse(get_by_isbn_content)?;
+    let book_node = doc
+        .descendants()
+        .find(|nd| nd.is_element() && nd.tag_name().name() == "book")
+        .expect("Unable to find book node");
+    Ok(parse_book(book_node))
 }
