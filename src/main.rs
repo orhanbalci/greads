@@ -100,6 +100,25 @@ fn main() {
         book.to_table(io);
         Ok(())
     });
+
+    shell.new_command_noargs("isbntobookid", "isbn to book id", |io, sd| {
+        let sp = Spinner::new(Spinners::Dots9, "Fetching book ids".into());
+
+        let mut runtime = sd.rt.lock().unwrap();
+
+        let book_id = runtime
+            .block_on(
+                GreadsClient::new()
+                    .books()
+                    .get_book_id_for_isbn(&"9755109285"),
+            )
+            .unwrap();
+
+        sp.stop();
+        write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
+        writeln!(io, "{:?}", book_id);
+        Ok(())
+    });
     // shell.new_command_noargs("showauthor", "show author info", author_show_command);
     shell.run_loop(&mut ShellIO::default());
 }

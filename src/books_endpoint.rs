@@ -9,6 +9,7 @@ pub struct BooksEndpoint<'a> {
     bookid_endpoint: &'static str,
     title_endpoint: &'static str,
     author_endpoint: &'static str,
+    isbntoid_endpoint: &'static str,
 }
 
 impl<'a> BooksEndpoint<'a> {
@@ -19,6 +20,7 @@ impl<'a> BooksEndpoint<'a> {
             bookid_endpoint: "book/show/",
             title_endpoint: "book/title.xml",
             author_endpoint: "author/show.xml",
+            isbntoid_endpoint: "book/isbn_to_id",
         }
     }
 
@@ -116,5 +118,50 @@ impl<'a> BooksEndpoint<'a> {
             .map(|k| super::parser::parse_books(&k.unwrap()).map_err(GError::ParsingError))
             .await;
         result
+    }
+
+    pub async fn get_book_ids_for_isbns(
+        &self,
+        isbn: &Vec<&str>,
+    ) -> Result<Vec<Option<u64>>, GError> {
+        let mut url = url::Url::parse(&format!(
+            "{}/{}",
+            self.client.base_api_url, self.isbntoid_endpoint
+        ))
+        .unwrap();
+        url.query_pairs_mut().append_pair("key", self.client.key);
+        url.query_pairs_mut().append_pair("isbn", &isbn.join(","));
+
+        let result = self
+            .client
+            .hclient
+            .get(url.as_str())
+            .send()
+            .then(|r| r.unwrap().text())
+            .await;
+
+        match result {
+            Ok(book_ids) => Ok(book_ids
+                .split(",")
+                .map(|s| {
+                    if s.is_empty() {
+                        None
+                    } else {
+                        s.parse::<u64>().ok()
+                    }
+                })
+                .collect()),
+            Err(e) => Err(GError::RequestError(e)),
+        }
+    }
+
+    pub async fn get_book_id_for_isbn(&self, isbn: &str) -> Result<Option<u64>, GError> {
+        self.get_book_ids_for_isbns(&vec![isbn]).await.map(|res| {
+            if res.len() > 0 {
+                *res.first().unwrap()
+            } else {
+                None
+            }
+        })
     }
 }

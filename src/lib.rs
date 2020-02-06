@@ -4,7 +4,7 @@ pub mod error;
 pub mod parser;
 
 use books_endpoint::BooksEndpoint;
-use entity::{GAuthor};
+use entity::GAuthor;
 use error::GError;
 
 static BASE_API_URL: &'static str = "https://www.goodreads.com/";
