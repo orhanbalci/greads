@@ -12,16 +12,80 @@ use prettytable::Table;
 #[derive(Clone)]
 struct ShellData {
     rt: Arc<Mutex<Runtime>>,
+    pub last_command: Option<GReadsCommand>,
+}
+
+#[derive(Clone)]
+struct GReadsCommand {
+    command: String,
+    args: Vec<String>,
 }
 
 fn main() {
     let sd = ShellData {
         rt: Arc::new(Mutex::new(Runtime::new().unwrap())),
+        last_command: None,
     };
 
     let mut shell = Shell::new(sd);
     shell.new_command_noargs("hello", "Say 'hello' to the world", |io, _sd| {
         writeln!(io, "Hello World !!!")?;
+        Ok(())
+    });
+
+    shell.new_shell_command("next", "go to next page ", 0, |io, sh, params| {
+        {
+            let mut page_arg: u32 = 0;
+            let mut line = String::new();
+            let mut command = String::new();
+            match &sh.data().last_command {
+                Some(lc) => {
+                    page_arg = lc.args[0].parse::<u32>().unwrap();
+                    command = lc.command.clone();
+                    line = format!("{} {}", lc.command, page_arg + 1);
+                    sh.eval(io, &line);
+                }
+                None => {
+                    writeln!(io, "Non repeatable command");
+                }
+            }
+            if !command.is_empty() {
+                sh.data().last_command = Some(GReadsCommand {
+                    command: command,
+                    args: vec![format!("{}", page_arg + 1)],
+                });
+            }
+        }
+
+        Ok(())
+    });
+
+    shell.new_shell_command("prev", "go to previous page ", 0, |io, sh, params| {
+        {
+            let mut page_arg: u32 = 0;
+            let mut command = String::new();
+            match &sh.data().last_command {
+                Some(lc) => {
+                    page_arg = lc.args[0].parse::<u32>().unwrap();
+                    if page_arg > 1 {
+                        command = lc.command.clone();
+
+                        let line = format!("{} {}", lc.command, page_arg - 1);
+                        sh.eval(io, &line);
+                    }
+                }
+                None => {
+                    writeln!(io, "Non repeatable command");
+                }
+            }
+            if !command.is_empty() {
+                sh.data().last_command = Some(GReadsCommand {
+                    command: command,
+                    args: vec![format!("{}", page_arg - 1)],
+                });
+            }
+        }
+
         Ok(())
     });
 
@@ -38,18 +102,27 @@ fn main() {
         Ok(())
     });
 
-    shell.new_command_noargs("authorlist", "list authors books", |io, sd| {
+    shell.new_shell_command("authorlist", "list authors books", 1, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching author books".into());
+        {
+            let mut runtime = sh.data().rt.lock().unwrap();
 
-        let mut runtime = sd.rt.lock().unwrap();
+            let books = runtime
+                .block_on(
+                    GreadsClient::new()
+                        .books()
+                        .get_by_author_id(1285555, args[0].parse::<u32>().unwrap()),
+                )
+                .unwrap();
+            sp.stop();
+            write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
+            books.to_table(io);
+        }
 
-        let books = runtime
-            .block_on(GreadsClient::new().books().get_by_author_id(1285555, 1))
-            .unwrap();
-
-        sp.stop();
-        write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
-        books.to_table(io);
+        sh.data().last_command = Some(GReadsCommand {
+            command: "authorlist".to_string(),
+            args: args.to_vec().iter().map(|s| s.to_string()).collect(),
+        });
         //table.print(io).expect("Can not print authors book result");
 
         Ok(())

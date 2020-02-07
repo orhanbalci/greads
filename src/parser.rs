@@ -18,7 +18,7 @@ pub fn parse_author(author_content: &str) -> Result<GAuthor, roxmltree::Error> {
 }
 
 pub fn parse_books(book_content: &str) -> Result<Vec<GBook>, roxmltree::Error> {
-    println!("{}", book_content);
+    //println!("{}", book_content);
     let doc = roxmltree::Document::parse(book_content)?;
     let book_nodes = doc
         .descendants()
