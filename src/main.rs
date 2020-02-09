@@ -192,6 +192,46 @@ fn main() {
         writeln!(io, "{:?}", book_id);
         Ok(())
     });
+
+    shell.new_command_noargs("login", "login to goodreads", |io, sd| {
+        let sp = Spinner::new(Spinners::Dots9, "Getting tokens".into());
+
+        let mut runtime = sd.rt.lock().unwrap();
+
+        let request_token_key = runtime
+            .block_on(GreadsClient::new().request_token())
+            .unwrap();
+
+        sp.stop();
+        let token = request_token_key.unwrap();
+        let tokens = token.split('&').collect::<Vec<_>>();
+        write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
+        writeln!(io, "{:?}", tokens[0]);
+        writeln!(io, "{:?}", tokens[1]);
+        let auth_url = GreadsClient::new().request_authorization_url(tokens[0]);
+        writeln!(
+            io,
+            "Please visit  {} and enter resultant url here : ",
+            auth_url
+        );
+
+        let stdin = std::io::BufReader::new(io.clone());
+        let mut iter = stdin.lines().map(|l| l.unwrap());
+        if let Some(mut line) = iter.next() {
+            let question_position = line.chars().position(|s| s == '?').unwrap();
+            let params = line[question_position..].split('&').collect::<Vec<_>>();
+            let auth_token = runtime
+                .block_on(
+                    GreadsClient::new()
+                        .authorize_token(tokens[0].split('=').collect::<Vec<_>>()[1], tokens[1].split('=').collect::<Vec<_>>()[1]),
+                )
+                .unwrap();
+            writeln!(io, "{:?}", auth_token);
+        }
+
+        Ok(())
+    });
+
     // shell.new_command_noargs("showauthor", "show author info", author_show_command);
     shell.run_loop(&mut ShellIO::default());
 }

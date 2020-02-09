@@ -16,6 +16,7 @@ prettytable-rs = "0.8.0"
 futures = "0.3.2"
 spinners = "1.2.0"
 ansi-escapes = "0.1.0"
+oauth1 = "1.0.0"
 
 [lib]
 name = "greadslib"
