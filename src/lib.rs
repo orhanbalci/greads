@@ -9,21 +9,23 @@ use error::GError;
 use oauth1::Token;
 
 static BASE_API_URL: &'static str = "https://www.goodreads.com/";
-static CLIENT_KEY: &'static str = "bTDP9FC0ax7CKuOQxHnIoQ";
-static CLIENT_SECRET: &'static str = "";
 
 pub struct GreadsClient {
-    key: &'static str,
-    secret: &'static str,
+    key: String,
+    secret: String,
     hclient: reqwest::Client,
     base_api_url: &'static str,
 }
 
 impl GreadsClient {
-    pub fn new() -> GreadsClient {
+    pub fn new<K, S>(client_key: K, client_secret: S) -> GreadsClient
+    where
+        K: ToString,
+        S: ToString,
+    {
         GreadsClient {
-            key: CLIENT_KEY,
-            secret: CLIENT_SECRET,
+            key: client_key.to_string(),
+            secret: client_secret.to_string(),
             hclient: reqwest::Client::new(),
             base_api_url: BASE_API_URL,
         }
@@ -40,7 +42,7 @@ impl GreadsClient {
                 oauth1::authorize(
                     "GET",
                     url.as_str(),
-                    &Token::new(self.key, self.secret),
+                    &Token::new(&self.key, &self.secret),
                     None,
                     None,
                 ),
@@ -52,8 +54,12 @@ impl GreadsClient {
         Ok(Some(result))
     }
 
-    pub async fn authorize_token(&self, token: &str, token_key: &str) -> Result<Option<String>, GError> {
-        println!("{}",token);
+    pub async fn authorize_token(
+        &self,
+        token: &str,
+        token_key: &str,
+    ) -> Result<Option<String>, GError> {
+        println!("{}", token);
         let url_base = format!("{}oauth/access_token", BASE_API_URL);
         let mut url = url::Url::parse(&url_base).unwrap();
         let result = self
@@ -64,7 +70,7 @@ impl GreadsClient {
                 oauth1::authorize(
                     "GET",
                     url.as_str(),
-                    &Token::new(self.key, self.secret),
+                    &Token::new(&self.key, &self.secret),
                     Some(&Token::new(token, token_key)),
                     None,
                 ),
@@ -87,7 +93,7 @@ impl GreadsClient {
     pub async fn author_show(&self, author_id: u32) -> Result<GAuthor, GError> {
         let url_base = format!("{}/author/show.xml", BASE_API_URL);
         let mut url = url::Url::parse(&url_base).unwrap();
-        url.query_pairs_mut().append_pair("key", self.key);
+        url.query_pairs_mut().append_pair("key", &self.key);
         url.query_pairs_mut()
             .append_pair("id", &author_id.to_string());
 

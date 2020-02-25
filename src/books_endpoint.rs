@@ -33,7 +33,7 @@ impl<'a> BooksEndpoint<'a> {
             self.client.base_api_url, self.title_endpoint
         ))
         .unwrap();
-        url.query_pairs_mut().append_pair("key", self.client.key);
+        url.query_pairs_mut().append_pair("key", &self.client.key);
         url.query_pairs_mut()
             .append_pair("title", &title.to_string());
         url.query_pairs_mut()
@@ -55,7 +55,7 @@ impl<'a> BooksEndpoint<'a> {
             self.client.base_api_url, self.isbn_endpoint, isbn
         ))
         .unwrap();
-        url.query_pairs_mut().append_pair("key", self.client.key);
+        url.query_pairs_mut().append_pair("key", &self.client.key);
         url.query_pairs_mut().append_pair("isbn", isbn);
         let result = self
             .client
@@ -79,7 +79,7 @@ impl<'a> BooksEndpoint<'a> {
             book_id.to_string()
         ))
         .unwrap();
-        url.query_pairs_mut().append_pair("key", self.client.key);
+        url.query_pairs_mut().append_pair("key", &self.client.key);
         url.query_pairs_mut()
             .append_pair("bookId", &book_id.to_string());
         let result = self
@@ -103,7 +103,7 @@ impl<'a> BooksEndpoint<'a> {
             self.client.base_api_url, self.author_endpoint
         ))
         .unwrap();
-        url.query_pairs_mut().append_pair("key", self.client.key);
+        url.query_pairs_mut().append_pair("key", &self.client.key);
         url.query_pairs_mut()
             .append_pair("id", &author_id.to_string());
         url.query_pairs_mut()
@@ -129,7 +129,7 @@ impl<'a> BooksEndpoint<'a> {
             self.client.base_api_url, self.isbntoid_endpoint
         ))
         .unwrap();
-        url.query_pairs_mut().append_pair("key", self.client.key);
+        url.query_pairs_mut().append_pair("key", &self.client.key);
         url.query_pairs_mut().append_pair("isbn", &isbn.join(","));
 
         let result = self

@@ -17,6 +17,7 @@ futures = "0.3.2"
 spinners = "1.2.0"
 ansi-escapes = "0.1.0"
 oauth1 = "1.0.0"
+config = "0.10"
 
 [lib]
 name = "greadslib"

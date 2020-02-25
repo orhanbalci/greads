@@ -1,3 +1,4 @@
+use config::Config;
 use greadslib::GreadsClient;
 use shrust::{Shell, ShellIO};
 use spinners::{Spinner, Spinners};
@@ -13,6 +14,7 @@ use prettytable::Table;
 struct ShellData {
     rt: Arc<Mutex<Runtime>>,
     pub last_command: Option<GReadsCommand>,
+    pub settings: config::Config,
 }
 
 #[derive(Clone)]
@@ -22,9 +24,12 @@ struct GReadsCommand {
 }
 
 fn main() {
+    let mut settings = config::Config::default();
+    settings.merge(config::File::with_name("Settings")).unwrap();
     let sd = ShellData {
         rt: Arc::new(Mutex::new(Runtime::new().unwrap())),
         last_command: None,
+        settings: settings,
     };
 
     let mut shell = Shell::new(sd);
@@ -89,12 +94,24 @@ fn main() {
         Ok(())
     });
 
-    shell.new_command_noargs("authorshow", "show author info", |io, sd| {
+    shell.new_shell_command("authorshow", "show author info", 0, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching author".into());
-        let mut runtime = sd.rt.lock().unwrap();
+        let data = sh.data();
+
+        let mut runtime = data.rt.lock().unwrap();
 
         let author = runtime
-            .block_on(GreadsClient::new().author_show(1285555))
+            .block_on(
+                GreadsClient::new(
+                    data.settings
+                        .get_str("CLIENT_KEY")
+                        .expect("can not get key"),
+                    data.settings
+                        .get_str("CLIENT_SECRET")
+                        .expect("can not get secret"),
+                )
+                .author_show(1285555),
+            )
             .unwrap();
         sp.stop();
         write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not clear terminal");
@@ -105,13 +122,20 @@ fn main() {
     shell.new_shell_command("authorlist", "list authors books", 1, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching author books".into());
         {
-            let mut runtime = sh.data().rt.lock().unwrap();
-
+            let data = sh.data();
+            let mut runtime = data.rt.lock().unwrap();
             let books = runtime
                 .block_on(
-                    GreadsClient::new()
-                        .books()
-                        .get_by_author_id(1285555, args[0].parse::<u32>().unwrap()),
+                    GreadsClient::new(
+                        data.settings
+                            .get_str("CLIENT_KEY")
+                            .expect("can not get key"),
+                        data.settings
+                            .get_str("CLIENT_SECRET")
+                            .expect("can not get secret"),
+                    )
+                    .books()
+                    .get_by_author_id(1285555, args[0].parse::<u32>().unwrap()),
                 )
                 .unwrap();
             sp.stop();
@@ -128,12 +152,23 @@ fn main() {
         Ok(())
     });
 
-    shell.new_command_noargs("bookisbn", "list book by isbn", |io, sd| {
+    shell.new_shell_command("bookisbn", "list book by isbn", 0, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching author books".into());
+        let data = sh.data();
+        let mut runtime = data.rt.lock().unwrap();
 
-        let mut runtime = sd.rt.lock().unwrap();
-
-        let book = runtime.block_on(GreadsClient::new().books().get_by_isbn("9755109285"));
+        let book = runtime.block_on(
+            GreadsClient::new(
+                data.settings
+                    .get_str("CLIENT_KEY")
+                    .expect("can not get key"),
+                data.settings
+                    .get_str("CLIENT_SECRET")
+                    .expect("can not get secret"),
+            )
+            .books()
+            .get_by_isbn("9755109285"),
+        );
         if let Ok(b) = book {
             sp.stop();
             write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
@@ -144,13 +179,24 @@ fn main() {
         Ok(())
     });
 
-    shell.new_command_noargs("bookbyid", "list book by id", |io, sd| {
+    shell.new_shell_command("bookbyid", "list book by id", 0, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching books".into());
-
-        let mut runtime = sd.rt.lock().unwrap();
+        let data = sh.data();
+        let mut runtime = data.rt.lock().unwrap();
 
         let book = runtime
-            .block_on(GreadsClient::new().books().get_by_book_id(11307453))
+            .block_on(
+                GreadsClient::new(
+                    data.settings
+                        .get_str("CLIENT_KEY")
+                        .expect("can not get key"),
+                    data.settings
+                        .get_str("CLIENT_SECRET")
+                        .expect("can not get secret"),
+                )
+                .books()
+                .get_by_book_id(11307453),
+            )
             .unwrap();
 
         sp.stop();
@@ -159,13 +205,25 @@ fn main() {
         Ok(())
     });
 
-    shell.new_command_noargs("bookbytitle", "list book by title", |io, sd| {
+    shell.new_shell_command("bookbytitle", "list book by title", 0, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching books".into());
+        let data = sh.data();
 
-        let mut runtime = sd.rt.lock().unwrap();
+        let mut runtime = data.rt.lock().unwrap();
 
         let book = runtime
-            .block_on(GreadsClient::new().books().get_by_title("korluk", ""))
+            .block_on(
+                GreadsClient::new(
+                    data.settings
+                        .get_str("CLIENT_KEY")
+                        .expect("can not get key"),
+                    data.settings
+                        .get_str("CLIENT_SECRET")
+                        .expect("can not get secret"),
+                )
+                .books()
+                .get_by_title("korluk", ""),
+            )
             .unwrap();
 
         sp.stop();
@@ -181,9 +239,14 @@ fn main() {
 
         let book_id = runtime
             .block_on(
-                GreadsClient::new()
-                    .books()
-                    .get_book_id_for_isbn(&"9755109285"),
+                GreadsClient::new(
+                    sd.settings.get_str("CLIENT_KEY").expect("can not get key"),
+                    sd.settings
+                        .get_str("CLIENT_SECRET")
+                        .expect("can not get secret"),
+                )
+                .books()
+                .get_book_id_for_isbn(&"9755109285"),
             )
             .unwrap();
 
@@ -199,7 +262,15 @@ fn main() {
         let mut runtime = sd.rt.lock().unwrap();
 
         let request_token_key = runtime
-            .block_on(GreadsClient::new().request_token())
+            .block_on(
+                GreadsClient::new(
+                    sd.settings.get_str("CLIENT_KEY").expect("can not get key"),
+                    sd.settings
+                        .get_str("CLIENT_SECRET")
+                        .expect("can not get secret"),
+                )
+                .request_token(),
+            )
             .unwrap();
 
         sp.stop();
@@ -208,7 +279,13 @@ fn main() {
         write!(io, "{}", ansi_escapes::EraseLines(1)).expect("Can not write result to output");
         writeln!(io, "{:?}", tokens[0]);
         writeln!(io, "{:?}", tokens[1]);
-        let auth_url = GreadsClient::new().request_authorization_url(tokens[0]);
+        let auth_url = GreadsClient::new(
+            sd.settings.get_str("CLIENT_KEY").expect("can not get key"),
+            sd.settings
+                .get_str("CLIENT_SECRET")
+                .expect("can not get secret"),
+        )
+        .request_authorization_url(tokens[0]);
         writeln!(
             io,
             "Please visit  {} and enter resultant url here : ",
@@ -222,8 +299,16 @@ fn main() {
             let params = line[question_position..].split('&').collect::<Vec<_>>();
             let auth_token = runtime
                 .block_on(
-                    GreadsClient::new()
-                        .authorize_token(tokens[0].split('=').collect::<Vec<_>>()[1], tokens[1].split('=').collect::<Vec<_>>()[1]),
+                    GreadsClient::new(
+                        sd.settings.get_str("CLIENT_KEY").expect("can not get key"),
+                        sd.settings
+                            .get_str("CLIENT_SECRET")
+                            .expect("can not get secret"),
+                    )
+                    .authorize_token(
+                        tokens[0].split('=').collect::<Vec<_>>()[1],
+                        tokens[1].split('=').collect::<Vec<_>>()[1],
+                    ),
                 )
                 .unwrap();
             writeln!(io, "{:?}", auth_token);
