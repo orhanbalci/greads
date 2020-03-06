@@ -39,12 +39,14 @@ fn parse_book(book_node: roxmltree::Node) -> GBook {
     let num_pages = get_node_text_from_parent_node(book_node, "num_pages");
     let average_rating = get_node_text_from_parent_node(book_node, "average_rating");
     let description = get_node_text_from_parent_node(book_node, "description");
+    let isbn = get_node_text_from_parent_node(book_node, "isbn");
     GBook {
         id: id.map(|i| i.parse().unwrap()).unwrap(),
         title: title.unwrap(),
         num_pages: num_pages.map(|np| np.parse().unwrap()),
         average_rating: average_rating.map(|ar| ar.parse().unwrap()),
         description: description,
+        isbn: isbn.unwrap(),
     }
 }
 

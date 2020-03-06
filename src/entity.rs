@@ -11,6 +11,7 @@ pub struct GAuthor {
 #[derive(Debug)]
 pub struct GBook {
     pub id: u32,
+    pub isbn: String,
     pub title: String,
     pub num_pages: Option<u32>,
     pub average_rating: Option<f32>,

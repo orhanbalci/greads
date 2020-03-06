@@ -179,7 +179,7 @@ fn main() {
         Ok(())
     });
 
-    shell.new_shell_command("bookbyid", "list book by id", 0, |io, sh, args| {
+    shell.new_shell_command("bookbyid", "list book by id", 1, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching books".into());
         let data = sh.data();
         let mut runtime = data.rt.lock().unwrap();
@@ -195,7 +195,7 @@ fn main() {
                         .expect("can not get secret"),
                 )
                 .books()
-                .get_by_book_id(11307453),
+                .get_by_book_id(args[0]),
             )
             .unwrap();
 
@@ -205,7 +205,7 @@ fn main() {
         Ok(())
     });
 
-    shell.new_shell_command("bookbytitle", "list book by title", 0, |io, sh, args| {
+    shell.new_shell_command("bookbytitle", "list book by title", 1, |io, sh, args| {
         let sp = Spinner::new(Spinners::Dots9, "Fetching books".into());
         let data = sh.data();
 
@@ -222,7 +222,7 @@ fn main() {
                         .expect("can not get secret"),
                 )
                 .books()
-                .get_by_title("korluk", ""),
+                .get_by_title(args[0], ""),
             )
             .unwrap();
 
@@ -312,6 +312,8 @@ fn main() {
                 )
                 .unwrap();
             writeln!(io, "{:?}", auth_token);
+            // todo token parse edilecek key secret ayrilacak
+            //sd.settings.set("auth_token",auth_token);
         }
 
         Ok(())
@@ -383,6 +385,7 @@ impl TableDisplay for greadslib::entity::GBook {
         let mut table = Table::new();
         table.add_row(row![
             "Book Id",
+            "ISBN",
             "Title",
             "Number Of Pages",
             "Average Rating",
@@ -390,6 +393,7 @@ impl TableDisplay for greadslib::entity::GBook {
         ]);
         table.add_row(row![
             self.id,
+            self.isbn,
             self.title,
             self.num_pages.unwrap_or(0),
             self.average_rating.unwrap_or(0.0f32),

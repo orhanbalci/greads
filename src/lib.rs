@@ -31,6 +31,13 @@ impl GreadsClient {
         }
     }
 
+    pub fn to_authorized<T>(&self, auth_token: T) -> AuthorizedGreadsClient
+    where
+        T: ToString,
+    {
+        AuthorizedGreadsClient::new_from(&self, auth_token)
+    }
+
     pub async fn request_token(&self) -> Result<Option<String>, GError> {
         let url_base = format!("{}oauth/request_token", BASE_API_URL);
         let mut url = url::Url::parse(&url_base).unwrap();
@@ -99,5 +106,43 @@ impl GreadsClient {
 
         let result = self.hclient.get(url.as_str()).send().await?.text().await?;
         parser::parse_author(&result).map_err(GError::ParsingError)
+    }
+}
+
+pub struct AuthorizedGreadsClient {
+    key: String,
+    secret: String,
+    hclient: reqwest::Client,
+    base_api_url: &'static str,
+    authorized_token: String,
+}
+
+impl AuthorizedGreadsClient {
+    pub fn new<K, S, T>(client_key: K, client_secret: S, auth_token: T) -> AuthorizedGreadsClient
+    where
+        K: ToString,
+        S: ToString,
+        T: ToString,
+    {
+        AuthorizedGreadsClient {
+            key: client_key.to_string(),
+            secret: client_secret.to_string(),
+            hclient: reqwest::Client::new(),
+            base_api_url: BASE_API_URL,
+            authorized_token: auth_token.to_string(),
+        }
+    }
+
+    pub fn new_from<T>(gl: &GreadsClient, auth_token: T) -> AuthorizedGreadsClient
+    where
+        T: ToString,
+    {
+        AuthorizedGreadsClient {
+            key: gl.key.clone(),
+            secret: gl.secret.clone(),
+            hclient: reqwest::Client::new(),
+            base_api_url: BASE_API_URL,
+            authorized_token: auth_token.to_string(),
+        }
     }
 }
