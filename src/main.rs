@@ -312,7 +312,7 @@ fn main() {
                 )
                 .unwrap();
             writeln!(io, "{:?}", auth_token);
-            // todo token parse edilecek key secret ayrilacak
+            // todo token parse edilecek key secret ayrilacak``
             //sd.settings.set("auth_token",auth_token);
         }
 

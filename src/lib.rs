@@ -2,11 +2,13 @@ pub mod books_endpoint;
 pub mod entity;
 pub mod error;
 pub mod parser;
+pub mod reviews_endpoint;
 
 use books_endpoint::BooksEndpoint;
 use entity::GAuthor;
 use error::GError;
 use oauth1::Token;
+use reviews_endpoint::ReviewsEndpoint;
 
 static BASE_API_URL: &'static str = "https://www.goodreads.com/";
 
@@ -95,6 +97,10 @@ impl GreadsClient {
 
     pub fn books<'a>(&self) -> BooksEndpoint {
         BooksEndpoint::new(&self)
+    }
+
+    pub fn reviews<'a>(&self) -> ReviewsEndpoint {
+        ReviewsEndpoint::new(&self)
     }
 
     pub async fn author_show(&self, author_id: u32) -> Result<GAuthor, GError> {

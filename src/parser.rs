@@ -1,4 +1,4 @@
-use super::entity::{GAuthor, GBook};
+use super::entity::{GAuthor, GBook, GReview};
 pub fn parse_author(author_content: &str) -> Result<GAuthor, roxmltree::Error> {
     let doc = roxmltree::Document::parse(author_content)?;
     let id = get_node_text(&doc, "id");
@@ -80,4 +80,9 @@ pub fn parse_get_by_isbn(get_by_isbn_content: &str) -> Result<GBook, roxmltree::
         .find(|nd| nd.is_element() && nd.tag_name().name() == "book")
         .expect("Unable to find book node");
     Ok(parse_book(book_node))
+}
+
+pub fn parse_review(review: &str) -> Result<GReview, roxmltree::Error> {
+    println!("{}", review);
+    Ok(GReview {})
 }

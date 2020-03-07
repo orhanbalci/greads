@@ -17,3 +17,6 @@ pub struct GBook {
     pub average_rating: Option<f32>,
     pub description: Option<String>,
 }
+
+#[derive(Debug)]
+pub struct GReview {}
