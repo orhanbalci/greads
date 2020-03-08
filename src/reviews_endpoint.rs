@@ -7,6 +7,7 @@ pub struct ReviewsEndpoint<'a> {
     pub client: &'a GreadsClient,
     show_endpoint: &'static str,
     user_book_endpoint: &'static str,
+    recent_reviews_endpoint : &'static str,
 }
 
 impl<'a> ReviewsEndpoint<'a> {
@@ -15,6 +16,7 @@ impl<'a> ReviewsEndpoint<'a> {
             client: client,
             show_endpoint: "review/show",
             user_book_endpoint: "review/show_by_user_and_book",
+            recent_reviews_endpoint: "review/recent_reviews",
         }
     }
 
@@ -66,6 +68,24 @@ impl<'a> ReviewsEndpoint<'a> {
             .send()
             .then(|r| r.unwrap().text())
             .map(|k| super::parser::parse_review(&k.unwrap()).map_err(GError::ParsingError))
+            .await;
+
+        result
+    }
+
+    pub async fn get_recent_reviews(&self) -> Result<Vec<GReview>, GError> {
+         let mut url = url::Url::parse(&format!(
+            "{}/{}",
+            self.client.base_api_url, self.recent_reviews_endpoint
+        ))
+        .unwrap();
+        let result = self
+            .client
+            .hclient
+            .get(url.as_str())
+            .send()
+            .then(|r| r.unwrap().text())
+            .map(|k| super::parser::parse_reviews(&k.unwrap()).map_err(GError::ParsingError))
             .await;
 
         result
