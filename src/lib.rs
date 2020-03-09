@@ -1,8 +1,10 @@
 pub mod books_endpoint;
 pub mod entity;
 pub mod error;
+pub mod order;
 pub mod parser;
 pub mod reviews_endpoint;
+pub mod sort_by;
 
 use books_endpoint::BooksEndpoint;
 use entity::GAuthor;
@@ -42,7 +44,7 @@ impl GreadsClient {
 
     pub async fn request_token(&self) -> Result<Option<String>, GError> {
         let url_base = format!("{}oauth/request_token", BASE_API_URL);
-        let mut url = url::Url::parse(&url_base).unwrap();
+        let url = url::Url::parse(&url_base).unwrap();
         let result = self
             .hclient
             .get(url.as_str())
@@ -70,7 +72,7 @@ impl GreadsClient {
     ) -> Result<Option<String>, GError> {
         println!("{}", token);
         let url_base = format!("{}oauth/access_token", BASE_API_URL);
-        let mut url = url::Url::parse(&url_base).unwrap();
+        let url = url::Url::parse(&url_base).unwrap();
         let result = self
             .hclient
             .get(url.as_str())
