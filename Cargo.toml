@@ -18,6 +18,7 @@ spinners = "1.2.0"
 ansi-escapes = "0.1.0"
 oauth1 = "1.0.0"
 config = "0.10"
+chrono = "0.4"
 
 [lib]
 name = "greadslib"

@@ -91,3 +91,8 @@ pub fn parse_reviews(review: &str) -> Result<Vec<GReview>, roxmltree::Error> {
     println!("{}", review);
     Ok(vec![GReview {}])
 }
+
+pub fn parse_create_review(review_created: &str) -> Result<u64, roxmltree::Error> {
+    println!("{}", review_created);
+    Ok(0u64)
+}

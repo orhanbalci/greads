@@ -4,6 +4,7 @@ use super::order::Order;
 use super::sort_by::SortBy;
 use super::GreadsClient;
 
+use chrono::NaiveDate;
 use futures::future::FutureExt;
 
 pub struct ReviewsEndpoint<'a> {
@@ -12,6 +13,7 @@ pub struct ReviewsEndpoint<'a> {
     user_book_endpoint: &'static str,
     recent_reviews_endpoint: &'static str,
     list_endpoint: &'static str,
+    create_endpoint: &'static str,
 }
 
 impl<'a> ReviewsEndpoint<'a> {
@@ -22,6 +24,7 @@ impl<'a> ReviewsEndpoint<'a> {
             user_book_endpoint: "review/show_by_user_and_book",
             recent_reviews_endpoint: "review/recent_reviews",
             list_endpoint: "review/list",
+            create_endpoint: "review.xml",
         }
     }
 
@@ -151,6 +154,57 @@ impl<'a> ReviewsEndpoint<'a> {
             .map(|k| super::parser::parse_reviews(&k.unwrap()).map_err(GError::ParsingError))
             .await;
 
+        result
+    }
+
+    pub async fn create_review<T, S>(
+        &self,
+        book_id: u64,
+        review: Option<T>,
+        rating: Option<u32>,
+        date_read: Option<NaiveDate>,
+        shelf_name: Option<S>,
+    ) -> Result<u64, GError>
+    where
+        T: Into<String>,
+        S: Into<String>,
+    {
+        let mut url = url::Url::parse(&format!(
+            "{}/{}",
+            self.client.base_api_url, self.create_endpoint
+        ))
+        .unwrap();
+        url.query_pairs_mut().append_pair("key", &self.client.key);
+        url.query_pairs_mut()
+            .append_pair("book_id", &book_id.to_string());
+        if let Some(review_text) = review {
+            url.query_pairs_mut()
+                .append_pair("review[text]", &review_text.into());
+        }
+
+        if let Some(rating) = rating {
+            url.query_pairs_mut()
+                .append_pair("review[rating]", &rating.to_string());
+        }
+
+        if let Some(date_read) = date_read {
+            url.query_pairs_mut()
+                .append_pair("review[read_at]", &date_read.format("%F").to_string());
+        }
+
+        if let Some(shelf_name) = shelf_name {
+            url.query_pairs_mut()
+                .append_pair("shelf", &shelf_name.into());
+        }
+
+        let result = self
+            .client
+            .hclient
+            .post(url.as_str())
+            .send()
+            .then(|r| r.unwrap().text())
+            .map(|k| super::parser::parse_create_review(&k.unwrap()).map_err(GError::ParsingError))
+            .await;
         result
     }
 }
