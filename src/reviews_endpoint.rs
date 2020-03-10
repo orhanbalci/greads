@@ -207,4 +207,52 @@ impl<'a> ReviewsEndpoint<'a> {
             .await;
         result
     }
+
+    pub async fn edit_review<T, S>(
+        &self,
+        review_id: u64,
+        review: T,
+        rating: Option<u32>,
+        date_read: Option<NaiveDate>,
+        shelf_name: Option<S>,
+    ) -> Result<bool, GError>
+    where
+        T: Into<String>,
+        S: Into<String>,
+    {
+        let mut url = url::Url::parse(&format!(
+            "{}/review/{}.xml",
+            self.client.base_api_url,
+            review_id.to_string()
+        ))
+        .unwrap();
+
+        url.query_pairs_mut()
+            .append_pair("review[text]", &review.into());
+
+        if let Some(rating) = rating {
+            url.query_pairs_mut()
+                .append_pair("review[rating]", &rating.to_string());
+        }
+
+        if let Some(date_read) = date_read {
+            url.query_pairs_mut()
+                .append_pair("review[read_at]", &date_read.format("%F").to_string());
+        }
+
+        if let Some(shelf_name) = shelf_name {
+            url.query_pairs_mut()
+                .append_pair("shelf", &shelf_name.into());
+        }
+
+        let result = self
+            .client
+            .hclient
+            .post(url.as_str())
+            .send()
+            .then(|r| futures::future::ok(r.unwrap().status().is_success()))
+            .await;
+
+        result
+    }
 }
