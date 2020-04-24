@@ -2,24 +2,24 @@
 good reads cli
 
 # EndPoint Implementation Status
-- [] Authors
-- [] AuthorsFollowing
+- [ ] Authors
+- [ ] AuthorsFollowing
 - [x] Books
-- [] Comments
-- [] Events
-- [] Followers
-- [] Friends
-- [] Groups
-- [] Notifications
-- [] Owned Books
-- [] Quotes
-- [] Read Status
-- [] Reccomendation
+- [ ] Comments
+- [ ] Events
+- [ ] Followers
+- [ ] Friends
+- [ ] Groups
+- [ ] Notifications
+- [ ] Owned Books
+- [ ] Quotes
+- [ ] Read Status
+- [ ] Reccomendation
 - [x] Reviews
-- [] Series
-- [] Shelves
-- [] Topics
-- [] Updates
-- [] Users
-- [] User Statuses
+- [ ] Series
+- [ ] Shelves
+- [ ] Topics
+- [ ] Updates
+- [ ] Users
+- [ ] User Statuses
 
